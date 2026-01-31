@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-// import 'package:url_launcher/url_launcher.dart'; // Uncomment when dependency is active
+import 'package:provider/provider.dart';
 import '../models/resource_model.dart';
+import '../services/firestore_service.dart';
+import '../services/auth_service.dart';
 
 class ResourcesScreen extends StatefulWidget {
   const ResourcesScreen({super.key});
@@ -10,22 +12,14 @@ class ResourcesScreen extends StatefulWidget {
 }
 
 class _ResourcesScreenState extends State<ResourcesScreen> {
-  // Mock Data
-  final List<String> _modules = ['Algorithmique', 'Analyse 1', 'Physique 1', 'Chimie 1'];
+  // We will fetch unique module names from the user's enrolled modules to filter resources
+  // Or just hardcode common ones / fetch from a 'subjects' collection if we had one.
+  // For now, we'll use a hardcoded list of common USTHB first year modules + allow 'All'
+  final List<String> _subjects = ['Algorithmique', 'Analyse 1', 'Physique 1', 'Chimie 1', 'Terminologie', 'Anglais'];
   String? _selectedModule;
-
-  final List<Resource> _allResources = [
-    Resource(id: '1', title: 'Cours 1: Introduction', moduleId: 'Algorithmique', url: '#', type: ResourceType.pdf, uploadDate: DateTime.now(), size: '1.2 MB'),
-    Resource(id: '2', title: 'Serie TD 1', moduleId: 'Algorithmique', url: '#', type: ResourceType.pdf, uploadDate: DateTime.now(), size: '0.5 MB'),
-    Resource(id: '3', title: 'Correction Exam 2024', moduleId: 'Analyse 1', url: '#', type: ResourceType.pdf, uploadDate: DateTime.now(), size: '2.1 MB'),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    List<Resource> displayedResources = _selectedModule == null 
-        ? _allResources 
-        : _allResources.where((r) => r.moduleId == _selectedModule).toList();
-
     return Scaffold(
       appBar: AppBar(title: const Text('Resources')),
       body: Column(
@@ -36,10 +30,10 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.all(8),
-              itemCount: _modules.length + 1,
+              itemCount: _subjects.length + 1,
               itemBuilder: (context, index) {
                 final isAll = index == 0;
-                final moduleName = isAll ? 'All' : _modules[index - 1];
+                final moduleName = isAll ? 'All' : _subjects[index - 1];
                 final isSelected = isAll ? _selectedModule == null : _selectedModule == moduleName;
 
                 return Padding(
@@ -59,23 +53,41 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
           ),
           
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: displayedResources.length,
-              itemBuilder: (context, index) {
-                final resource = displayedResources[index];
-                return Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                    title: Text(resource.title),
-                    subtitle: Text('${resource.moduleId} • ${resource.size}'),
-                    trailing: const Icon(Icons.download_rounded),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                         const SnackBar(content: Text('Downloading...')),
-                      );
-                    },
-                  ),
+            child: StreamBuilder<List<Resource>>(
+              stream: FirestoreService().getResources(_selectedModule),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+                if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+
+                final displayedResources = snapshot.data ?? [];
+
+                if (displayedResources.isEmpty) {
+                  return const Center(child: Text('No resources found for this subject.'));
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: displayedResources.length,
+                  itemBuilder: (context, index) {
+                    final resource = displayedResources[index];
+                    return Card(
+                      child: ListTile(
+                        leading: Icon(
+                          resource.type == ResourceType.pdf ? Icons.picture_as_pdf : Icons.image, 
+                          color: resource.type == ResourceType.pdf ? Colors.red : Colors.blue
+                        ),
+                        title: Text(resource.title),
+                        subtitle: Text('${resource.moduleId} • ${resource.size}'),
+                        trailing: const Icon(Icons.download_rounded),
+                        onTap: () {
+                          // In a real app, use url_launcher or dio to download
+                          ScaffoldMessenger.of(context).showSnackBar(
+                             SnackBar(content: Text('Opening ${resource.title}...')),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -84,7 +96,10 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Upload logic for admin/delegates
+          // Placeholder for upload - in a real app this would pick file & upload to storage
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Upload feature would open File Picker here.')),
+          );
         },
         child: const Icon(Icons.upload_file),
       ),

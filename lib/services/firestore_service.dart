@@ -4,6 +4,7 @@ import '../models/student_model.dart';
 import '../models/announcement_model.dart';
 import '../models/module_model.dart';
 import '../models/time_slot_model.dart';
+import '../models/resource_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

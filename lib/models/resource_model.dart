@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum ResourceType { pdf, image, other }
 
 class Resource {
@@ -18,4 +20,30 @@ class Resource {
     required this.uploadDate,
     required this.size,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'moduleId': moduleId,
+      'url': url,
+      'type': type.toString().split('.').last,
+      'uploadDate': Timestamp.fromDate(uploadDate),
+      'size': size,
+    };
+  }
+
+  factory Resource.fromMap(Map<String, dynamic> data, String id) {
+    return Resource(
+      id: id,
+      title: data['title'] ?? '',
+      moduleId: data['moduleId'] ?? '',
+      url: data['url'] ?? '',
+      type: ResourceType.values.firstWhere(
+        (e) => e.toString().split('.').last == data['type'],
+        orElse: () => ResourceType.other,
+      ),
+      uploadDate: (data['uploadDate'] as Timestamp).toDate(),
+      size: data['size'] ?? '',
+    );
+  }
 }

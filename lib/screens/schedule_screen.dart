@@ -51,7 +51,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
                 DropdownButtonFormField<String>(
                   value: selectedType,
                   decoration: const InputDecoration(labelText: 'Type'),
-                  items: ['Course', 'TD', 'TP'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  items: ['Course', 'TD', 'TP', 'Exam'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                   onChanged: (v) => setState(() => selectedType = v!),
                 ),
                 const SizedBox(height: 8),
@@ -202,6 +202,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
     Color typeColor = Colors.blue;
     if (slot.type == 'TD') typeColor = Colors.orange;
     if (slot.type == 'TP') typeColor = Colors.green;
+    if (slot.type == 'Exam') typeColor = Colors.red;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
