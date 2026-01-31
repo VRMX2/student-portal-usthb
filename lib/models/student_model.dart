@@ -9,6 +9,14 @@ class Student {
   final String? profilePhotoUrl;
   final List<String> enrolledModuleIds;
   final Map<String, dynamic> metadata;
+  
+  // Social fields
+  final String? bio;
+  final int followerCount;
+  final int followingCount;
+  final bool isPrivate;
+  final DateTime? lastSeen;
+  final bool isOnline;
 
   Student({
     required this.id,
@@ -21,6 +29,12 @@ class Student {
     this.profilePhotoUrl,
     this.enrolledModuleIds = const [],
     this.metadata = const {},
+    this.bio,
+    this.followerCount = 0,
+    this.followingCount = 0,
+    this.isPrivate = false,
+    this.lastSeen,
+    this.isOnline = false,
   });
 
   factory Student.fromMap(Map<String, dynamic> data, String id) {
@@ -35,6 +49,12 @@ class Student {
       profilePhotoUrl: data['profilePhotoUrl'],
       enrolledModuleIds: List<String>.from(data['enrolledModuleIds'] ?? []),
       metadata: data['metadata'] ?? {},
+      bio: data['bio'],
+      followerCount: data['followerCount'] ?? 0,
+      followingCount: data['followingCount'] ?? 0,
+      isPrivate: data['isPrivate'] ?? false,
+      lastSeen: data['lastSeen']?.toDate(),
+      isOnline: data['isOnline'] ?? false,
     );
   }
 
@@ -49,6 +69,12 @@ class Student {
       'profilePhotoUrl': profilePhotoUrl,
       'enrolledModuleIds': enrolledModuleIds,
       'metadata': metadata,
+      'bio': bio,
+      'followerCount': followerCount,
+      'followingCount': followingCount,
+      'isPrivate': isPrivate,
+      'lastSeen': lastSeen,
+      'isOnline': isOnline,
     };
   }
 }
