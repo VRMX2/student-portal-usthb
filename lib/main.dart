@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 import 'utils/theme.dart';
 import 'router.dart';
 
@@ -9,6 +10,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp();
+    await PushNotificationService().initialize();
   } catch (e) {
     debugPrint("Firebase initialization failed: $e");
     // Continue running app might allow UI testing even if backend fails

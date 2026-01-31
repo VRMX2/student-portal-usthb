@@ -12,6 +12,7 @@ import '../screens/admin_dashboard_screen.dart';
 import '../screens/create_announcement_screen.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/user_management_screen.dart';
+import '../screens/academic_history_screen.dart';
 import '../models/student_model.dart';
 
 final router = GoRouter(
@@ -66,6 +67,10 @@ final router = GoRouter(
           builder: (context, state) => const UserManagementScreen(),
         ),
       ],
+    ),
+    GoRoute(
+      path: '/academic-history',
+      builder: (context, state) => const AcademicHistoryScreen(),
     ),
   ],
 );

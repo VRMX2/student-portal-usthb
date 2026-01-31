@@ -26,7 +26,12 @@ class Module {
     this.weightExam = 0.6,
     this.weightTD = 0.2, // Default assumption
     this.weightTP = 0.2,
+    this.semester = 'S1', // Default
+    this.year = 'L1', // Default
   });
+
+  final String semester; // e.g., S1, S2
+  final String year; // e.g., L1, L2, M1
 
   double get average {
     // Simple calculation logic, might need adjustment per module type
@@ -65,6 +70,8 @@ class Module {
       weightExam: (data['weightExam'] ?? 0.6).toDouble(),
       weightTD: (data['weightTD'] ?? 0.2).toDouble(),
       weightTP: (data['weightTP'] ?? 0.2).toDouble(),
+      semester: data['semester'] ?? 'S1',
+      year: data['year'] ?? 'L1',
     );
   }
 
@@ -80,6 +87,8 @@ class Module {
       'weightExam': weightExam,
       'weightTD': weightTD,
       'weightTP': weightTP,
+      'semester': semester,
+      'year': year,
     };
   }
   
@@ -90,6 +99,8 @@ class Module {
     double? gradeTD,
     double? gradeTP,
     double? gradeExam,
+    String? semester,
+    String? year,
   }) {
     return Module(
       id: id,
@@ -102,6 +113,8 @@ class Module {
       weightExam: weightExam,
       weightTD: weightTD,
       weightTP: weightTP,
+      semester: semester ?? this.semester,
+      year: year ?? this.year,
     );
   }
 }

@@ -86,6 +86,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               label: const Text('Edit Profile'),
             ),
             const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/academic-history'),
+              icon: const Icon(Icons.history_edu),
+              label: const Text('Academic History'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+            const SizedBox(height: 12),
              TextButton.icon(
               onPressed: () {
                 context.push('/admin');

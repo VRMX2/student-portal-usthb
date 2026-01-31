@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../models/time_slot_model.dart';
+import '../services/auth_service.dart';
+import '../services/firestore_service.dart';
 
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({super.key});
@@ -10,48 +14,7 @@ class ScheduleScreen extends StatefulWidget {
 
 class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final List<String> _days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
-
-  // Mock Data
-  final Map<String, List<TimeSlot>> _schedule = {
-    'Sun': [
-      TimeSlot(
-        id: '1', 
-        subjectName: 'Algorithmique', 
-        type: 'Course', 
-        location: 'Amphi D', 
-        dayOfWeek: 'Sun', 
-        startTime: const TimeOfDay(hour: 8, minute: 0), 
-        endTime: const TimeOfDay(hour: 9, minute: 30), 
-        professorName: 'Dr. Boukerram'
-      ),
-      TimeSlot(
-        id: '2', 
-        subjectName: 'Algorithmique', 
-        type: 'TD', 
-        location: 'Salle 224', 
-        dayOfWeek: 'Sun', 
-        startTime: const TimeOfDay(hour: 9, minute: 40), 
-        endTime: const TimeOfDay(hour: 11, minute: 10), 
-        professorName: 'Mme. Amrouche'
-      ),
-    ],
-    'Mon': [
-       TimeSlot(
-        id: '3', 
-        subjectName: 'Analyse 1', 
-        type: 'Course', 
-        location: 'Amphi E', 
-        dayOfWeek: 'Mon', 
-        startTime: const TimeOfDay(hour: 11, minute: 20), 
-        endTime: const TimeOfDay(hour: 12, minute: 50), 
-        professorName: 'Pr. Khelladi'
-      ),
-    ],
-    'Tue': [],
-    'Wed': [],
-    'Thu': [],
-  };
+  final List<String> _days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   @override
   void initState() {
@@ -65,31 +28,172 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
     super.dispose();
   }
 
+  void _addTimeSlot(BuildContext context, String uid) {
+    final subjectController = TextEditingController();
+    final locationController = TextEditingController();
+    final professorController = TextEditingController();
+    String selectedType = 'Course';
+    String selectedDay = _days[_tabController.index]; // Default to current tab
+    TimeOfDay startTime = const TimeOfDay(hour: 8, minute: 0);
+    TimeOfDay endTime = const TimeOfDay(hour: 9, minute: 30);
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Class'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: subjectController, decoration: const InputDecoration(labelText: 'Subject')),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: const InputDecoration(labelText: 'Type'),
+                  items: ['Course', 'TD', 'TP'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  onChanged: (v) => setState(() => selectedType = v!),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: selectedDay,
+                  decoration: const InputDecoration(labelText: 'Day'),
+                  items: _days.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                  onChanged: (v) => setState(() => selectedDay = v!),
+                ),
+                const SizedBox(height: 8),
+                TextField(controller: locationController, decoration: const InputDecoration(labelText: 'Location')),
+                const SizedBox(height: 8),
+                TextField(controller: professorController, decoration: const InputDecoration(labelText: 'Professor')),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        final t = await showTimePicker(context: context, initialTime: startTime);
+                        if (t != null) setState(() => startTime = t);
+                      },
+                      child: Text('Start: ${startTime.format(context)}'),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () async {
+                        final t = await showTimePicker(context: context, initialTime: endTime);
+                        if (t != null) setState(() => endTime = t);
+                      },
+                      child: Text('End: ${endTime.format(context)}'),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                try {
+                  final slot = TimeSlot(
+                    id: const Uuid().v4(),
+                    subjectName: subjectController.text.trim(),
+                    type: selectedType,
+                    location: locationController.text.trim(),
+                    dayOfWeek: selectedDay,
+                    startTime: startTime,
+                    endTime: endTime,
+                    professorName: professorController.text.trim(),
+                  );
+                  await FirestoreService().addTimeSlot(uid, slot);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _deleteTimeSlot(BuildContext context, String uid, String id) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete'),
+        content: const Text('Remove this class from schedule?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              await FirestoreService().deleteTimeSlot(uid, id);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authService = context.watch<AuthService>();
+    final uid = authService.user?.uid;
+
+    if (uid == null) {
+      return const Scaffold(body: Center(child: Text('Please log in')));
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Timetable'),
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: _days.map((day) => Tab(text: day)).toList(),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _days.map((day) {
-          final slots = _schedule[day] ?? [];
-          if (slots.isEmpty) {
-            return const Center(child: Text('No classes today!'));
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: slots.length,
-            itemBuilder: (context, index) {
-              return _buildTimeSlotCard(slots[index]);
-            },
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _addTimeSlot(context, uid),
+        child: const Icon(Icons.add),
+      ),
+      body: StreamBuilder<List<TimeSlot>>(
+        stream: FirestoreService().getSchedule(uid),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+
+          final allSlots = snapshot.data ?? [];
+
+          return TabBarView(
+            controller: _tabController,
+            children: _days.map((day) {
+              final daySlots = allSlots.where((s) => s.dayOfWeek == day).toList();
+              // Sort by start time
+              daySlots.sort((a, b) {
+                final aMin = a.startTime.hour * 60 + a.startTime.minute;
+                final bMin = b.startTime.hour * 60 + b.startTime.minute;
+                return aMin.compareTo(bMin);
+              });
+
+              if (daySlots.isEmpty) {
+                return const Center(child: Text('No classes today!'));
+              }
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: daySlots.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onLongPress: () => _deleteTimeSlot(context, uid, daySlots[index].id),
+                    child: _buildTimeSlotCard(daySlots[index]),
+                  );
+                },
+              );
+            }).toList(),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -125,9 +229,14 @@ class _ScheduleScreenState extends State<ScheduleScreen> with SingleTickerProvid
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    slot.subjectName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        slot.subjectName,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(
