@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
+import '../utils/theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,12 +28,34 @@ class _LoginScreenState extends State<LoginScreen> {
             _passwordController.text.trim(),
           );
       // Navigation is handled by router redirect
+    } on FirebaseAuthException catch (e) {
+      String message = 'Login failed';
+      if (e.code == 'user-not-found') {
+        message = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Wrong password provided.';
+      } else if (e.code == 'invalid-credential') {
+        message = 'Invalid email or password.';
+      } else if (e.code == 'operation-not-allowed') {
+        message = 'Email/Password login is not enabled in Firebase Console.';
+      }
+      AppTheme.showErrorSnackBar(context, message);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: ${e.toString()}')),
-      );
+      AppTheme.showErrorSnackBar(context, 'Error: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _googleLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      await context.read<AuthService>().signInWithGoogle();
+      // Router handles redirect
+    } catch (e) {
+      AppTheme.showErrorSnackBar(context, 'Google Sign-In failed: ${e.toString()}');
+    } finally {
+       if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -101,6 +125,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Text('Login'),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _googleLogin,
+                  icon: const Icon(Icons.g_mobiledata, size: 28), // Or a custom Google asset
+                  label: const Text('Sign in with Google'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
                 TextButton(
                   onPressed: () {

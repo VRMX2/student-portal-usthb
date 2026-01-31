@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
+import '../utils/theme.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -60,10 +62,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
             department: _departmentController.text.trim(),
           );
       if (mounted) context.go('/login');
+    } on FirebaseAuthException catch (e) {
+      String message = 'Registration failed';
+      if (e.code == 'weak-password') {
+        message = 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'The account already exists for that email.';
+      } else if (e.code == 'operation-not-allowed') {
+        message = 'Email/Password accounts are not enabled in Firebase Console.';
+      }
+      AppTheme.showErrorSnackBar(context, message);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Registration failed: ${e.toString()}')),
-      );
+      AppTheme.showErrorSnackBar(context, 'Registration failed: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

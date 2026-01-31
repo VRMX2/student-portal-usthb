@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'firestore_service.dart';
 import '../models/student_model.dart';
@@ -40,6 +41,7 @@ class AuthService extends ChangeNotifier {
         password: password,
       );
 
+      
       // Create Student document
       final student = Student(
         id: credential.user!.uid,
@@ -51,13 +53,69 @@ class AuthService extends ChangeNotifier {
         department: department,
       );
 
-      await FirestoreService().createStudent(student);
+      try {
+        await FirestoreService().createStudent(student);
+      } catch (firestoreError) {
+        // Rollback: If Firestore write fails, delete the Auth user
+        // so the user can try registering again without "email already in use" error.
+        await credential.user!.delete();
+        throw Exception('Failed to create student profile. ${firestoreError.toString()}');
+      }
+      
+      // If successful, signOut so they can login (optional, based on flow)
+      // await signOut(); // Usually we want them signed in.
+      
     } catch (e) {
       rethrow;
     }
   }
 
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return null; // User canceled
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final User? user = userCredential.user;
+
+      if (user != null) {
+        // Check if user exists in Firestore
+        final studentDoc = await FirestoreService().getStudent(user.uid);
+        if (studentDoc == null) {
+          // Create a placeholder student record if it doesn't exist
+          // The user will need to edit their profile to add matricule, faculty, etc.
+          final newStudent = Student(
+            id: user.uid,
+            email: user.email ?? '',
+            fullName: user.displayName ?? 'New Student',
+            matricule: 'Update Me',
+            faculty: 'Update Me',
+            academicLevel: 'L1',
+            department: 'Update Me',
+          );
+          await FirestoreService().createStudent(newStudent);
+        }
+      }
+
+      return userCredential;
+    } catch (e) {
+      // Handle Google Sign-In errors specially if needed
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
+    await _googleSignIn.signOut();
     await _auth.signOut();
   }
 

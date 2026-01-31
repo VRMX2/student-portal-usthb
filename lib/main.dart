@@ -6,10 +6,14 @@ import 'services/notification_service.dart';
 import 'utils/theme.dart';
 import 'router.dart';
 
+import 'firebase_options.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     await PushNotificationService().initialize();
   } catch (e) {
     debugPrint("Firebase initialization failed: $e");
