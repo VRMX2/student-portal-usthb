@@ -57,6 +57,24 @@ dependencies:
   google_fonts: ^6.2.1
   uuid: ^4.3.3
   google_sign_in: ^6.2.1
+  
+  # Cloudinary Integration
+  cloudinary_public: ^0.21.0
+  
+  # HTTP & API
+  http: ^1.2.0
+  dio: ^5.4.0
+  
+  # Chat & Social Features
+  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+  emoji_picker_flutter: ^2.0.0
+  record: ^5.0.4
+  audioplayers: ^5.2.1
+  timeago: ^3.6.1
+  badges: ^3.1.2
+  path_provider: ^2.1.2
+  mime: ^1.0.5
 
 dev_dependencies:
   flutter_test:

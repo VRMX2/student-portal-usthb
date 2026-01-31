@@ -15,18 +15,29 @@ import '../screens/user_management_screen.dart';
 import '../screens/academic_history_screen.dart';
 import '../models/student_model.dart';
 
-final router = GoRouter(
-  initialLocation: '/login',
-  redirect: (context, state) {
-    final authService = context.read<AuthService>();
-    final isLoggedIn = authService.isAuthenticated;
-    final isLoggingIn = state.uri.toString() == '/login';
+GoRouter createRouter(AuthService authService) {
+  return GoRouter(
+    initialLocation: '/login',
+    refreshListenable: authService,
+    redirect: (context, state) {
+      final isLoggedIn = authService.isAuthenticated;
+      final isLoggingIn = state.uri.toString() == '/login';
+      final isRegistering = state.uri.toString() == '/register';
+      final isForgotPassword = state.uri.toString() == '/forgot-password';
 
-    if (!isLoggedIn && !isLoggingIn) return '/login';
-    if (isLoggedIn && isLoggingIn) return '/';
+      // Allow access to auth-related pages when not logged in
+      if (!isLoggedIn && (isLoggingIn || isRegistering || isForgotPassword)) {
+        return null;
+      }
 
-    return null;
-  },
+      // Redirect to login if not authenticated
+      if (!isLoggedIn) return '/login';
+      
+      // Redirect to home if already logged in and trying to access login
+      if (isLoggedIn && (isLoggingIn || isRegistering)) return '/';
+
+      return null;
+    },
   routes: [
     GoRoute(
       path: '/login',
@@ -73,4 +84,6 @@ final router = GoRouter(
       builder: (context, state) => const AcademicHistoryScreen(),
     ),
   ],
-);
+  );
+}
+
