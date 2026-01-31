@@ -87,4 +87,67 @@ class FirestoreService {
         .doc(moduleId)
         .delete();
   }
+
+  // Schedule Methods
+  Stream<List<TimeSlot>> getSchedule(String uid) {
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('schedule')
+        .snapshots()
+        .map((snapshot) {
+          final slots = snapshot.docs.map((doc) => _timeSlotFromMap(doc.data(), doc.id)).toList();
+          return slots;
+        });
+  }
+
+  Future<void> addTimeSlot(String uid, TimeSlot slot) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('schedule')
+        .doc(slot.id)
+        .set(slot.toMap());
+  }
+
+  Future<void> deleteTimeSlot(String uid, String slotId) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('schedule')
+        .doc(slotId)
+        .delete();
+  }
+  
+  // Helper to parse TimeOfDay from string "HH:MM"
+  TimeSlot _timeSlotFromMap(Map<String, dynamic> data, String id) {
+    final startParts = (data['startTime'] as String).split(':');
+    final endParts = (data['endTime'] as String).split(':');
+
+    return TimeSlot(
+      id: id,
+      subjectName: data['subjectName'] ?? '',
+      type: data['type'] ?? '',
+      location: data['location'] ?? '',
+      dayOfWeek: data['dayOfWeek'] ?? '',
+      startTime: TimeOfDay(hour: int.parse(startParts[0]), minute: int.parse(startParts[1])),
+      endTime: TimeOfDay(hour: int.parse(endParts[0]), minute: int.parse(endParts[1])),
+      professorName: data['professorName'] ?? '',
+    );
+  }
+
+  // Resource Methods
+  Stream<List<Resource>> getResources(String? moduleName) {
+    Query query = _db.collection('resources').orderBy('uploadDate', descending: true);
+    if (moduleName != null && moduleName != 'All') {
+      query = query.where('moduleId', isEqualTo: moduleName);
+    }
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => Resource.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+        .toList());
+  }
+
+  Future<void> addResource(Resource resource) async {
+    await _db.collection('resources').doc(resource.id).set(resource.toMap());
+  }
 }

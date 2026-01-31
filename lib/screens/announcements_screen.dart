@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/announcement_model.dart';
+import '../services/firestore_service.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
   const AnnouncementsScreen({super.key});
@@ -10,43 +11,31 @@ class AnnouncementsScreen extends StatefulWidget {
 }
 
 class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
-  // Mock Data
-  final List<Announcement> _announcements = [
-    Announcement(
-      id: '1',
-      title: 'Inscriptions Master 2026',
-      content: 'Les inscriptions pour les Masters débuteront le 15 Septembre. Veuillez préparer vos dossiers.',
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      author: 'Administration',
-      targetAudience: 'L3',
-    ),
-    Announcement(
-      id: '2',
-      title: 'Planning des Examens',
-      content: 'Le planning des examens de rattrapage est affiché au niveau du département.',
-      date: DateTime.now().subtract(const Duration(days: 3)),
-      author: 'Dept. Informatique',
-    ),
-     Announcement(
-      id: '3',
-      title: 'Club Fair next week!',
-      content: 'Join us at the central hall to discover student clubs.',
-      date: DateTime.now().subtract(const Duration(days: 5)),
-      author: 'Student Union',
-      imageUrl: 'https://placeholder.com/banner',
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Announcements')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _announcements.length,
-        separatorBuilder: (c, i) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          return _buildAnnouncementCard(_announcements[index]);
+      body: StreamBuilder<List<Announcement>>(
+        stream: FirestoreService().getAnnouncements(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+
+          final announcements = snapshot.data ?? [];
+
+          if (announcements.isEmpty) {
+            return const Center(child: Text('No announcements yet.'));
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: announcements.length,
+            separatorBuilder: (c, i) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              return _buildAnnouncementCard(announcements[index]);
+            },
+          );
         },
       ),
     );

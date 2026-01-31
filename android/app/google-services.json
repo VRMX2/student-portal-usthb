@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "538801717391",
+    "project_id": "usthb-student-app-vrmx",
+    "storage_bucket": "usthb-student-app-vrmx.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:538801717391:android:dbb191577a7cb1c1eff0fa",
+        "android_client_info": {
+          "package_name": "com.vrmx.usthb_student_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "538801717391-a6icstn29i28hpt5io1pjmglh61noouo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6xItk3vat9wa608XtHczyX0_CRRKP4rc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "538801717391-a6icstn29i28hpt5io1pjmglh61noouo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

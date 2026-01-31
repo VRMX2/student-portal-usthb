@@ -14,10 +14,10 @@ class AppTheme {
       centerTitle: true,
       elevation: 0,
     ),
-    cardTheme: CardTheme(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
+    // cardTheme: CardTheme(
+    //   elevation: 2,
+    //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    // ),
   );
 
   static final ThemeData darkTheme = ThemeData(
@@ -32,9 +32,9 @@ class AppTheme {
       centerTitle: true,
       elevation: 0,
     ),
-    cardTheme: CardTheme(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ),
+    // cardTheme: CardTheme(
+    //   elevation: 2,
+    //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    // ),
   );
 }
