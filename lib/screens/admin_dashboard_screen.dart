@@ -29,7 +29,7 @@ class AdminDashboardScreen extends StatelessWidget {
             Icons.people,
             Colors.blue,
             () {
-              // Navigate to User Manager
+              context.push('/admin/user-management');
             },
           ),
           _buildAdminCard(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-// import 'package:provider/provider.dart'; // Will use if we have UserProvider
-// import '../services/auth_service.dart';
-// import '../models/student_model.dart';
-// import '../services/firestore_service.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
+import '../models/student_model.dart';
+import '../services/firestore_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,9 +13,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Placeholder for fetching user data
+  // State
+  Student? _student;
   bool _isLoading = true;
-  // Student? _student;
 
   @override
   void initState() {
@@ -24,9 +24,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _fetchProfile() async {
-    // Simulate fetch
-    await Future.delayed(const Duration(seconds: 1));
-    if (mounted) setState(() => _isLoading = false);
+    final authService = context.read<AuthService>();
+    final uid = authService.user?.uid;
+    if (uid != null) {
+      final student = await FirestoreService().getStudent(uid);
+      if (mounted) {
+        setState(() {
+          _student = student;
+          _isLoading = false;
+        });
+      }
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -35,32 +45,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    if (_student == null) {
+       return Scaffold(
+        appBar: AppBar(title: const Text('My Profile')),
+        body: const Center(child: Text('User not found')),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('My Profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 50,
               backgroundColor: Colors.grey,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
+              backgroundImage: _student!.profilePhotoUrl != null ? NetworkImage(_student!.profilePhotoUrl!) : null,
+              child: _student!.profilePhotoUrl == null ? const Icon(Icons.person, size: 50, color: Colors.white) : null,
             ),
             const SizedBox(height: 16),
             Text(
-              'Student Name',
+              _student!.fullName,
               style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
             ),
             Text(
-              'Matricule: 123456789',
+              'Matricule: ${_student!.matricule}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
             ),
             const SizedBox(height: 24),
             _buildInfoCard(context),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () {
-                // Navigate to edit profile
+              onPressed: () async {
+                 await context.push('/edit-profile', extra: _student);
+                 _fetchProfile(); // Refresh on return
               },
               icon: const Icon(Icons.edit),
               label: const Text('Edit Profile'),
@@ -85,13 +105,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildListTile(Icons.school, 'Faculty', 'Informatique'),
+            _buildListTile(Icons.school, 'Faculty', _student!.faculty),
             const Divider(),
-            _buildListTile(Icons.timeline, 'Level', 'L3'),
+            _buildListTile(Icons.timeline, 'Level', _student!.academicLevel),
             const Divider(),
-            _buildListTile(Icons.class_, 'Department', 'Software Engineering'),
+            _buildListTile(Icons.class_, 'Department', _student!.department),
             const Divider(),
-            _buildListTile(Icons.email, 'Email', 'student@usthb.dz'),
+            _buildListTile(Icons.email, 'Email', _student!.email),
           ],
         ),
       ),

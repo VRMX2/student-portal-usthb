@@ -10,6 +10,9 @@ import '../screens/modules_screen.dart';
 import '../screens/announcements_screen.dart';
 import '../screens/admin_dashboard_screen.dart';
 import '../screens/create_announcement_screen.dart';
+import '../screens/edit_profile_screen.dart';
+import '../screens/user_management_screen.dart';
+import '../models/student_model.dart';
 
 final router = GoRouter(
   initialLocation: '/login',
@@ -57,6 +60,10 @@ final router = GoRouter(
         GoRoute(
           path: 'create-announcement',
           builder: (context, state) => const CreateAnnouncementScreen(),
+        ),
+        GoRoute(
+          path: 'user-management',
+          builder: (context, state) => const UserManagementScreen(),
         ),
       ],
     ),
